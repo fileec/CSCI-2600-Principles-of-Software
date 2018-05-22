@@ -1,0 +1,332 @@
+package hw7;
+import hw9.*;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import java.util.Set;
+
+import hw4.Edge;
+import hw4.Graph;
+
+public class CampusMap {
+	private Graph<Location, Double> mapgraph;	//graph structure
+	private HashMap<String, Location> id2location;		//map of id to location objects
+	private HashMap<String, String> name2id;			//map of name to ids
+	
+	/* @requires none
+	 * @effects creates new CampusMap object
+	 * @modifies none
+	 * @throws none
+	 * @returns none
+	 */
+	public CampusMap() {
+		mapgraph = new Graph<Location, Double>();
+		id2location = new HashMap<String, Location>();
+		name2id = new HashMap<String, String>();
+	}
+	
+	/* @requires none
+	 * @effects none
+	 * @modifies none
+	 * @throws none
+	 * @returns distance between two points via Pythagorean theorem
+	 */
+	public static double findDistance(double x1, double y1, double x2, double y2) {
+		return Math.sqrt( (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) );
+	}
+	
+	/*
+	 * @requires none
+	 * @effects id2location and name2id
+	 * @modifies none
+	 * @throws IOException if locations aren't seen in either csv
+	 * @returns none
+	 */
+	public void createMap(String nodeFilename, String edgeFilename) throws IOException {
+		DataParser.parseNodeData(nodeFilename, id2location, name2id);
+		
+		HashSet<HashSet<String>> edgeid = new HashSet<HashSet<String>>();
+		DataParser.parseEdgeData(edgeFilename, edgeid);
+		
+		for(HashSet<String> edge : edgeid) {
+			ArrayList<String> arrayedge = new ArrayList<String>(edge);
+			String id1 = arrayedge.get(0);
+			String id2 = arrayedge.get(1);
+			
+			Location location1 = id2location.get(id1);
+			Location location2 = id2location.get(id2);
+			
+			//if id from edge not seen in nodes csv, throw IO
+			if (location1.equals(null) || location2.equals(null)) {
+				throw new IOException("id in edge.csv not seen in node.csv");
+			}
+			
+			Double distance = CampusMap.findDistance(location1.getX(), location1.getY(), location2.getX(), location2.getY());
+			
+			mapgraph.addNode(location1);
+			mapgraph.addNode(location2);
+			
+			mapgraph.addEdge(location1, location2, distance);
+			mapgraph.addEdge(location2, location1, distance);
+		}
+	}
+	
+	public String[] getBuildings(){
+		ArrayList<String> unsortedall = new ArrayList<String>();
+		String list = "";
+		for(Entry<String, Location> mapentry : id2location.entrySet())
+		{
+			String name = mapentry.getValue().getName();
+			if (!name.contains("Intersection"))
+				unsortedall.add(name + ",");
+		}
+		Collections.sort(unsortedall);
+		for(String building : unsortedall)
+			list += building;
+		String[] array = list.split(",");
+		return array;
+	}
+	
+	/* @requires none
+	 * @effects none
+	 * @modifies none
+	 * @throws generic Exception e if name is not an int
+	 * @returns String conversion of a name to an ID
+	 */
+	public String nameToId(String name) {
+		boolean isint = true;
+		try {
+			int id = Integer.parseInt(name);
+		}
+		catch (Exception e) {
+			isint = false;
+		}
+		
+		if (isint) {
+			if (id2location.containsKey(name) && !id2location.get(name).getName().contains("Intersection")) {
+				return name;
+			}
+			else {
+				return "bad_id";
+			}
+		}
+		else {
+			if (name2id.containsKey(name)) {
+				return name2id.get(name);
+			}
+			else {
+				return "bad_building";
+			}
+		}
+	}
+	
+	/* @requires none
+	 * @effects none
+	 * @modifies none
+	 * @throws none
+	 * @returns - String representation of a path between two buildings
+	 */
+	public String findPath(String startinput, String endinput) {
+		String ret = "";
+		//reject bad id/buildings
+		if (this.nameToId(startinput).equals("bad_id") || this.nameToId(startinput).equals("bad_building")) {
+			ret += "Unknown building: ["+startinput+"]\n";
+			if (this.nameToId(endinput).equals("bad_id") || this.nameToId(endinput).equals("bad_building")) {
+				if (!startinput.equals(endinput)) {
+					ret += "Unknown building: ["+endinput+"]\n";
+				}
+			}
+			return ret;
+		}
+		else if (this.nameToId(endinput).equals("bad_id") || this.nameToId(endinput).equals("bad_building")) {
+			ret += "Unknown building: ["+endinput+"]\n";
+			return ret;
+		}
+		
+		//Gets IDs
+		String startid = this.nameToId(startinput);
+		String destid = this.nameToId(endinput);
+		
+		//Get locations from id to location map
+		Location startloc = id2location.get(startid);
+		Location destloc = id2location.get(destid);
+		
+		if(!mapgraph.getNodes().contains(startloc) || !mapgraph.getNodes().contains(destloc)) {
+			return "There is no path from "+startloc.getName()+" to "+destloc.getName()+".\n";
+		}
+		
+		//Create copies of nodes for starting and ending spots in the graph
+		Location start = startloc;
+		Location dest = destloc;
+		
+		//Dijkstra setup
+		PriorityQueue<Path> active = new PriorityQueue<Path>();
+		HashMap<Location, Double> finished = new HashMap<Location, Double>();
+		Edge<Location, Double> firstedge = new Edge<Location, Double>(start, start, 0.0);
+		Path firstpath = new Path();
+		firstpath.addEdge(firstedge);
+		active.add(firstpath);
+		
+		//run dijkstra algorithm on graph
+		while(!active.isEmpty()) {
+			Path minpath = active.poll();
+			Location mindest = minpath.getDestination();
+			
+			//successful path
+			if (mindest.equals(dest)) {
+				ret = "Path from "+startloc.getName()+" to "+destloc.getName()+":\n";
+				ret += minpath.parsePath();
+				return ret;
+			}
+			
+			//seen path
+			if (finished.containsKey(mindest)) {
+				continue;
+			}
+			
+			//unseen path
+			Set<Edge<Location, Double>> children = mapgraph.getChildrenEdges(mindest);
+			for(Edge<Location, Double> edge : children) {
+				if (!finished.containsKey(edge.getEnd())) {
+					Path newpath = new Path(minpath);
+					newpath.addEdge(edge);
+					active.add(newpath);
+				}
+			}
+			//mark seen
+			finished.put(mindest, minpath.getLength());
+		}
+		//no successful path
+		return "There is no path from "+startloc.getName()+" to "+destloc.getName()+".\n";
+	}
+	
+	/* @requires none
+	 * @effects none
+	 * @modifies none
+	 * @throws none
+	 * @returns - A string representation of the ArrayList of all buildings
+	 */
+	public String listAll() {
+		ArrayList<String> unsortedall = new ArrayList<String>();
+		String list = "";
+		
+		for(Entry<String, Location> mapentry : id2location.entrySet()) {
+			String name = mapentry.getValue().getName();
+			
+			if (!name.contains("Intersection")) {
+				unsortedall.add(name+","+mapentry.getKey()+"\n");
+			}
+		}
+		Collections.sort(unsortedall);
+		for(String building : unsortedall) {
+			list += building;
+		}
+		return list;
+	}
+	public double getX(String name)
+	{
+		String temp_id = name2id.get(name);
+		Location temp_coordinate = id2location.get(temp_id);
+		return temp_coordinate.getX();
+	}
+	public double getY(String name)
+	{
+		String temp_id = name2id.get(name);
+		Location temp_coordinate = id2location.get(temp_id);
+		return temp_coordinate.getY();
+	}
+	
+	/*  
+	 *    HOMEWORK 9 FUNCTIONS
+	 * 
+	 */
+	
+	public ArrayList<Edge<Location, Double>> FindPath(String start, String end)
+	{
+		boolean isint = true;
+		try{
+			Integer.parseInt(start);
+		}
+		catch (Exception e){
+			isint = false;
+		}
+		String id1, id2;
+		if(!isint) {
+			id1 = this.name2id.get(start);
+		}
+		else {
+			id1 = start;
+		}
+		isint = true;
+		try {
+			Integer.parseInt(end);
+		}
+		catch (Exception e) {
+			isint = false;
+		}
+		if(!isint) {
+			id2 = this.name2id.get(end);
+		}
+		else {
+			id2 = end;
+		}
+		Location position1 = id2location.get(id1);
+		Location position2 = id2location.get(id2);
+		
+		return new ArrayList<Edge<Location, Double>>(Dijkstras(mapgraph, position1, position2));
+	}
+	
+	@SuppressWarnings("hiding")
+	private static <Location> ArrayList<Edge<Location, Double>> Dijkstras(Graph<Location,Double> g, Location start, Location dest)
+	{
+		PriorityQueue<ArrayList<Edge<Location, Double>>> active =new PriorityQueue<ArrayList<Edge<Location, Double>>>(10,
+				new Comparator<ArrayList<Edge<Location, Double>>>()
+						{
+							@Override
+							public int compare(ArrayList<Edge<Location, Double>> arg0,
+									ArrayList<Edge<Location, Double>> arg1)
+							{
+								Edge<Location, Double> dest1 = arg0.get(arg0.size() - 1);
+								Edge<Location, Double> dest2 = arg1.get(arg1.size() - 1);
+								if (!(dest1.getValue().equals(dest2.getValue())))
+									return dest1.getValue().compareTo(dest2.getValue());
+								return arg0.size() - arg1.size();
+							}
+						});
+		Set<Location> finished = new HashSet<Location>();
+		ArrayList<Edge<Location, Double>> pathToSelf = new ArrayList<Edge<Location, Double>>();
+		pathToSelf.add(new Edge<Location, Double>(start, start, 0.000));
+		active.add(pathToSelf);
+		while (!active.isEmpty())
+		{
+			ArrayList<Edge<Location, Double>> minPath = active.poll();
+			Edge<Location, Double> last = minPath.get(minPath.size() - 1);
+			Location minDest = last.getEnd();
+			if (minDest.equals(dest)) {
+				minPath.add(dest);
+				return minPath;
+			}
+			if (finished.contains(minDest))
+				continue;
+			Set<Edge<Location, Double>> children = g.childrenOf(minDest);
+			for (Edge<Location, Double> e : children)
+			{
+				if (!finished.contains(e.getEdge()))
+				{
+					ArrayList<Edge<Location, Double>> newPath = new ArrayList<Edge<Location,Double>>(minPath);
+					newPath.add(e);
+					active.add(newPath);
+				}
+			}
+			finished.add(minDest);
+		}
+		return new ArrayList<Edge<Location, Double>>();
+	}
+
+}

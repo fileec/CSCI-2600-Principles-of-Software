@@ -1,0 +1,142 @@
+package hw6;
+
+import java.util.ArrayList;
+
+import hw4.Edge;
+
+/*
+ * Representation Invariant: 
+ * Path exists and has 0 or more valid edges
+
+ * Abstraction Function: 
+ * Each edge is one edge of path with start, end, and weight
+ */
+public class Path <NodeT extends Comparable<NodeT>,EdgeT extends Number & Comparable<EdgeT>> implements Comparable <Path<NodeT, EdgeT>> {
+	
+	// Path ADT is a mutable ArrayList of Edge objects with
+	// node type of String and weight of Double
+
+	//list of edges
+	private ArrayList<Edge<NodeT, EdgeT>> path;
+	
+	/*
+	 * brand new path
+	 * 
+	 * @effect new path array
+	 * @modify path array
+	 */
+	public Path() {
+		path = new ArrayList<Edge<NodeT, EdgeT>>();
+	}
+	
+	/*
+	 * generate from previous path
+	 * 
+	 * @param o previous path
+	 * @effect new path copy of o
+	 * @modify path array
+	 * @throws RuntimeException if o is null
+	 */
+	public Path(Path<NodeT, EdgeT> o) {
+		if (o == null) {
+			throw new IllegalArgumentException("null path");
+		}
+		path = new ArrayList<Edge<NodeT, EdgeT>>();
+		for (Edge<NodeT, EdgeT> edge : o.path) {
+			this.path.add(edge);
+		}
+	}
+	
+	/*
+	 * add edge to path
+	 * nothing if edge is null
+	 * 
+	 * @param newedge edge to add
+	 * @effect path now has newedge
+	 * @modify path
+	 */
+	public void addEdge(Edge<NodeT, EdgeT> edge) {
+		if (edge == null) {
+			throw new IllegalArgumentException("null edge");
+		}
+		path.add(edge);
+	}
+	
+	/*
+	 * get total path length
+	 * 
+	 * @return path length
+	 */
+	@SuppressWarnings("all")
+	public double getLength() {
+		double total = 0.0;
+		for(Edge<NodeT, EdgeT> edge: path) {
+			total = total + (double) edge.getValue();
+		}
+		return total;
+	}
+	
+	/*
+	 * get last node in path
+	 * 
+	 * @return Node of end of last edge in path
+	 */
+	public NodeT getDestination() {
+		if (path.size() == 0) {
+			throw new RuntimeException("path size is 0");
+		}
+		Edge<NodeT, EdgeT> last;
+		last = path.get(path.size()-1);
+		return last.getEnd();
+	}
+	
+	/*
+	 * string output of path
+	 * ignores first edge since first edge is always loop
+	 * 
+	 * @return string output
+	 */
+	public String parsePath() {
+		String ret = "";
+		if (this.path.size() > 1) {
+			for (int i = 1; i < path.size(); ++i) {
+				ret += path.get(i).getStart() + " to " + path.get(i).getEnd() + " with weight " + String.format("%.3f", path.get(i).getValue()) + "\n";
+			}
+		}
+		
+		return ret;
+	}
+	
+	@Override
+	public int compareTo(Path<NodeT, EdgeT> o) {
+		return ((Double)this.getLength()).compareTo(o.getLength());
+	}
+
+	@Override
+	public String toString() {
+		return "Path [path=" + path + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((path == null) ? 0 : path.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Path other = (Path) obj;
+		if (!path.equals(other.path))
+			return false;
+		return true;
+	}
+
+}

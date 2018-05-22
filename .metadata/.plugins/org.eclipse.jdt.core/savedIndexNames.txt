@@ -1,0 +1,24 @@
+INDEX VERSION 1.130+/Users/danielschnoll/Documents/RPI/Sophomore/Spring/CSCI 2600/.metadata/.plugins/org.eclipse.jdt.core
+2502973304.index
+3227702110.index
+624708564.index
+576073405.index
+2979435446.index
+616739193.index
+1044104405.index
+3209509607.index
+527849843.index
+2455606113.index
+3157663476.index
+2465022724.index
+190104283.index
+995153890.index
+204893112.index
+2626034515.index
+2932191785.index
+3358580009.index
+2117113611.index
+1931402068.index
+1271342938.index
+3748336949.index
+2763200912.index

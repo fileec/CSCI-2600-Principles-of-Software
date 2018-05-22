@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move &apos;problem3.dfy&apos; to &apos;answers&apos;" description="Move &apos;problem3.dfy&apos; to &apos;answers&apos;" destination="answers" element1="/csci2600-hw1/answers/problem3.dfy" flags="7" id="org.eclipse.ltk.core.refactoring.move.resources" resources="1" stamp="1518803428222" updateReferences="true"/>
+</session>

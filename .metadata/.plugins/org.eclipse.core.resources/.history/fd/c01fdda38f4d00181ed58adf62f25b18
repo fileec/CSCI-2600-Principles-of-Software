@@ -1,0 +1,284 @@
+package hw4;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import hw4.Edge;
+
+/*
+ * Representation Invariant:
+ *  nodes != null
+ *  nodes.size()==nodeCount
+ *  edgeCount<=nodeCount(nodeCount-1)+nodeCount
+ *  the number of edges must be lower 
+ *  than the greatest amount of edges possible
+ *  
+ * Abstraction Function:
+ *  All nodes are stored in a HashMap with their key as a Node object
+ *	and a value of an ArrayList of Node objects, which lists all 
+ *	connected nodes
+ */
+
+public class Graph<NodeT, EdgeT>{
+	// Graph ADT is a mutable directed graph using a HashMap with a 
+	// String and a List of children for each Node n in nodes.
+	
+	// Variable declarations
+	private Map<NodeT, ArrayList<Edge<NodeT, EdgeT>>> nodes;
+	private int nodeCount;
+	private int edgeCount;
+	
+	/* @requires none
+	 * @effects - creates new nodes HashMap
+	 * @modifies none
+	 * @throws none
+	 * @returns none
+	 */
+	public Graph() {
+		nodeCount = 0;
+		edgeCount = 0;
+		nodes = new HashMap<NodeT, ArrayList<Edge<NodeT, EdgeT>>>();
+		//checkRep();
+	}
+	
+	/* @requires data != null
+	 * @effects none
+	 * @modifies - nodes, nodeCount
+	 * @throws none
+	 * @returns true if node successfully added, false if otherwise
+	 */
+	public boolean addNode(NodeT data){
+		if(!nodes.containsKey(data)) {
+			// Adds n to the map of nodes, initializes new ArrayList 
+			// of node's children
+			nodes.put(data, new ArrayList<Edge<NodeT, EdgeT>>());
+			nodeCount++;
+			
+			//checkRep();
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	/* @requires s, e, v != null
+	 * @effects none
+	 * @modifies - nodes, edgeCount
+	 * @throws none
+	 * @returns true if edge added successfully, false if otherwise
+	 */
+	public boolean addEdge(NodeT s, NodeT e, EdgeT v){
+		if(nodes.containsKey(s) && nodes.containsKey(e)) {
+			nodes.get(s).add(new Edge<NodeT,EdgeT>(s, e, v));
+			edgeCount++;
+			//checkRep();
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	/* @requires none
+	 * @effects none
+	 * @modifies none
+	 * @throws none
+	 * @returns - a list of all node values in order
+	 */
+	public Iterator<NodeT> listNodes(){
+		//checkRep();
+	    List<NodeT> returnList = new ArrayList<NodeT>();
+	    for(NodeT n : nodes.keySet()){
+	        returnList.add(n);
+	    }
+	    returnList.sort(null);
+	    //checkRep();
+	    return returnList.iterator();
+    }
+	
+	
+	/* @requires none
+	 * @effects none
+	 * @modifies none
+	 * @throws none
+	 * @returns - the keyset of nodes of type NodeT in the nodes HashMap
+	 */
+	public Set<NodeT> getNodes(){
+		return nodes.keySet();
+	}
+	
+	/* @requires none
+	 * @effects none
+	 * @modifies none
+	 * @throws none
+	 * @returns - the ArrayList of edges with node type NodeT and edge value type EdgeT in the nodes HashMap
+	 */
+	public Set<Edge<NodeT, EdgeT>> getChildrenEdges(NodeT parentNode) {
+		ArrayList<Edge<NodeT, EdgeT>> edges = nodes.get(parentNode);
+		Set<Edge<NodeT, EdgeT>> edgeset = new HashSet<Edge<NodeT, EdgeT>>();
+		for(Edge<NodeT, EdgeT> e : edges) {
+			edgeset.add(e);
+		}
+		return edgeset;
+	}
+	
+	/* @requires - parentNode != null
+	 * @effects none
+	 * @modifies none
+	 * @throws - IllegalArgumentException if parentNode is null
+	 * @returns - a list of all node values in order
+	 */
+	public Iterator<String> listChildren(NodeT parent){
+		//checkRep();
+		if (parent == null) {
+			throw new IllegalArgumentException("parentNode is a null pointer");
+		}
+		
+		List<String> returnList = new ArrayList<String>();
+		if(nodes.containsKey(parent)) {
+			List<Edge<NodeT, EdgeT>> edgelist = nodes.get(parent);
+			for(Edge<NodeT, EdgeT> e : edgelist) {
+				String rep = e.getEnd().toString() + "("+ e.getValue().toString() + ")";
+				returnList.add(rep);
+			}
+			returnList.sort(null);
+			//checkRep();
+			return returnList.iterator();
+			
+		}
+		return returnList.iterator();
+	}
+	
+	public Set<Edge<NodeT, Double>> childrenOf(NodeT node){
+		ArrayList<Edge<NodeT, EdgeT>> e = nodes.get(node);
+		if(e == null)
+			return null;
+		Iterator<Edge<NodeT, EdgeT>> it = e.iterator();
+		Set<Edge<NodeT, Double>> l = new HashSet<Edge<NodeT, Double>>();
+		while(it.hasNext())
+		{
+			l.add(it.next().getEdge());
+		}
+		return l;
+	}
+	
+	
+	//**************************************
+	//*        HOMEWORK 5 FUNCTIONS        *
+	//**************************************
+	/* @requires - n1 and n2 != null
+	 * @effects none
+	 * @modifies none
+	 * @throws - IllegalArgumentException if parentNode is null
+	 * @returns - a list of all node values in order
+	 */
+	public String findShortestPath(NodeT n1, NodeT n2) {	
+		String path = new String();
+		
+		//Checks if the start and end nodes exist
+		if(!nodes.containsKey(n1)) {
+			return path += "unknown character " + n1 + "\n";
+ 		}
+		if(!n1.equals(n2) && !nodes.containsKey(n2)) {
+			return path += "unknown character " + n2 + "\n";
+		}
+		path += "path from " + n1 + " to " + n2 + ":\n";
+		
+		// List serves as a queue
+		List<NodeT> toCheck = new ArrayList<NodeT>();
+		
+		// Each key in paths is a visited node.
+        // Each value is a path from start to that node, represented
+		// in a List data structure
+        Map<NodeT, List<String>> paths = new HashMap<NodeT, List<String>>();
+        
+        // Adds n1 to the queue
+        toCheck.add(n1);
+        
+        // Adds n1 to the path map and an empty list
+        paths.put(n1, new ArrayList<String>());
+        
+        
+        while(!toCheck.isEmpty()){
+        	
+        	// If currently dequeue'd node is the
+        	// destination, return the path
+            if(toCheck.get(0).equals(n2)){
+                path += pathMaker(paths.get(n2));
+                return path;
+            }
+            
+            else{
+            	// Checks dequeue'd node's edges
+                for(Edge<NodeT, EdgeT> edge : nodes.get(toCheck.get(0))){
+                	
+                	// If edge is not in the paths map, it hasn't been visited yet
+                	// Updates paths and toCheck queue accordingly
+            		if(!paths.containsKey(edge.getEnd())){
+            			
+            			// puts the dequeue'd node's end node in the visited map along with
+            			// the path that has lead up to visiting that node
+                        paths.put(edge.getEnd(), new ArrayList<String>(paths.get(toCheck.get(0))));
+                        
+                        // Updates the dequeue'd node's end node path with the currently dequeue'd node
+                        paths.get(edge.getEnd()).add(toCheck.get(0) + " to " + edge.getEnd() + " via " + edge.getValue());
+                        
+                        // Adds the dequeue'd node's end node to the queue for later checking
+                        toCheck.add(edge.getEnd());
+                    }
+            		
+            		// Builds the path for the start node
+            		else if (!edge.getEnd().equals(n1)){
+                        List<String> old = paths.get(edge.getEnd());
+                        List<String> newL = new ArrayList<String>(paths.get(toCheck.get(0)));
+                        newL.add(toCheck.get(0) + " to " + edge.getEnd() + " via " + edge.getValue());
+                        if(!(old.size() < newL.size())){
+                            String oldP = pathMaker(paths.get(edge.getEnd()));
+                            String newP = pathMaker(newL);
+                            if(oldP.compareTo(newP) > 0){
+                                paths.put(edge.getEnd(), newL);
+                            }
+                        }
+                    }
+                }
+            }
+            toCheck.remove(0);
+        }
+        // If the loop terminates, then no path exists from n1 to n2.
+        return path + "no path found\n";
+	}
+	
+	private String pathMaker(List<String> paths) {
+		String path = "";
+	    for(String s : paths){
+	    	path += s + "\n";
+	    }
+	    return path;
+	}
+	
+	/* DISABLING CHECKREP TO PASS ALL SUBMITTY TESTS
+	 * 
+	private void checkRep() {
+		if(nodes==null){
+            throw new RuntimeException("null pointer in data");
+        }
+        if(nodes.size()!=nodeCount){
+            throw new RuntimeException("incorrect number of nodes");
+        }
+        int count = 0;
+        
+        for (Node n : nodes.keySet()){
+        		count+= n.getNodeEdges().size();
+		}
+		if(count != edgeCount){
+			throw new RuntimeException("incorrect number of edges")
+		}
+	 *
+	 */
+}

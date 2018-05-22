@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item value="false" key="isRegEx"/>
+		<item value="find" key="selection"/>
+		<item value="false" key="casesensitive"/>
+		<item value="false" key="incremental"/>
+		<item value="true" key="wrap"/>
+		<item value="false" key="wholeword"/>
+		<list key="findhistory">
+			<item value="find"/>
+			<item value="getEdge"/>
+			<item value="getLabel"/>
+			<item value="Coordinate"/>
+			<item value="NOT"/>
+			<item value="not"/>
+			<item value="token"/>
+			<item value="Lines"/>
+			<item value="Polytechnic Residence Commons"/>
+			<item value="Blitman"/>
+			<item value="Polytechnic"/>
+			<item value="getchildren"/>
+			<item value="done"/>
+			<item value="contains"/>
+			<item value="findPath"/>
+		</list>
+		<list key="replacehistory">
+			<item value="getValue"/>
+			<item value="Location"/>
+			<item value="dijkstras"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item value="290" key="DIALOG_WIDTH"/>
+		<item value="1|.AppleSystemUIFont|11.0|0|COCOA|1|.AppleSystemUIFont" key="DIALOG_FONT_NAME"/>
+		<item value="409" key="DIALOG_HEIGHT"/>
+		<item value="797" key="DIALOG_X_ORIGIN"/>
+		<item value="133" key="DIALOG_Y_ORIGIN"/>
+	</section>
+</section>
